@@ -34,7 +34,7 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) { super.onCreate(savedInstanceState); window.statusBarColor = navy; window.navigationBarColor = Color.WHITE; window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR; showPage("Home") }
 
-    private fun showPage(name: String) {
+    fun showPage(name: String) {
         page = name
         root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(pale) }
         val header = LinearLayout(this).apply {
@@ -64,7 +64,7 @@ class MainActivity : Activity() {
         }
         root.addView(bottom)
         setContentView(root)
-        when (name) { "Home" -> home(); "Sale" -> invoiceForm(false); "Purchase" -> invoiceForm(true); "Parties" -> parties(); "Items" -> items(); "Reports" -> reports(); else -> more() }
+        when (name) { "Home" -> AccountingScreens(this).show("Transactions"); "Parties" -> AccountingScreens(this).show("Parties"); "Sale" -> invoiceForm(false); "Purchase" -> invoiceForm(true); "Items" -> items(); "Reports" -> reports(); else -> more() }
     }
 
     private fun label(s: String, size: Float = 15f, color: Int = navy, bold: Boolean = false): TextView =
