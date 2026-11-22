@@ -152,7 +152,7 @@ class MainActivity : Activity() {
     private fun invoiceForm(purchase: Boolean) {
         val kind = if (purchase) "Purchase" else "Sale"
         heading("Create $kind", "Enter transaction details below")
-        body.addView(label("DATE  •  $today()", 11f, muted, true), LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
+        body.addView(label("DATE  •  ${today()}", 11f, muted, true), LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
         val party = field(if (purchase) "Supplier / Party name" else "Customer / Party name")
         val item = field("Item / Product name")
         val qty = field("Quantity", "1")
