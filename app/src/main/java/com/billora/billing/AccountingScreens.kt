@@ -91,7 +91,7 @@ class AccountingScreens(private val a:Activity) {
 
  private fun menu(){
   line("My Business",18f,navy,true)
-  listOf("Sale" to "Sale","Purchase" to "Purchase","Expenses" to "Expenses","My Online Store" to "Online Store","Reports" to "Reports","Loyalty Points" to "Loyalty Points").forEach{(s,target)->btn("▣   $s     ›"){when(target){"Sale"->(a as MainActivity).showPage("Sale");"Purchase"->a.showPage("Purchase");"Reports"->a.showPage("Reports");else->Toast.makeText(a,"$s module will be added",Toast.LENGTH_SHORT).show()}}}
+  listOf("Sale" to "Sale","Purchase" to "Purchase","Expenses" to "Expenses","My Online Store" to "Online Store","Reports" to "Reports","Loyalty Points" to "Loyalty Points").forEach{(s,target)->btn("▣   $s     ›"){when(target){"Sale"->(a as MainActivity).showPage("Sale");"Purchase"->(a as MainActivity).showPage("Purchase");"Reports"->(a as MainActivity).showPage("Reports");else->Toast.makeText(a,"$s module will be added",Toast.LENGTH_SHORT).show()}}}
   line("Cash & Bank",16f,navy,true)
   listOf("Bank Accounts","Cash In-Hand","Cheques","Loan Accounts").forEach{btn("▤   $it     ›"){Toast.makeText(a,"$it module will be added",Toast.LENGTH_SHORT).show()}}
   line("Important Utilities",16f,navy,true)
