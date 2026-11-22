@@ -64,7 +64,7 @@ class MainActivity : Activity() {
         }
         root.addView(bottom)
         setContentView(root)
-        when (name) { "Home" -> AccountingScreens(this).show("Transactions"); "Parties" -> AccountingScreens(this).show("Parties"); "More" -> AccountingScreens(this).show("Menu"); "Items" -> AccountingScreens(this).show("Items"); "Sale" -> invoiceForm(false); "Purchase" -> invoiceForm(true); "Items" -> items(); "Reports" -> reports(); else -> more() }
+        when (name) { "Home" -> home(); "Parties" -> AccountingScreens(this).show("Parties"); "More" -> AccountingScreens(this).show("Menu"); "Items" -> AccountingScreens(this).show("Items"); "Sale" -> invoiceForm(false); "Purchase" -> invoiceForm(true); "Items" -> items(); "Reports" -> reports(); else -> more() }
     }
 
     private fun label(s: String, size: Float = 15f, color: Int = navy, bold: Boolean = false): TextView =
@@ -153,122 +153,209 @@ class MainActivity : Activity() {
         val kind = if (purchase) "Purchase" else "Sale"
         val key = if (purchase) "purchases" else "sales"
         val invoiceNo = (if (purchase) "PUR/" else "BG/") + (arr(key).length() + 1).toString().padStart(3, '0')
-        heading(kind, "Create and save your ${kind.lowercase(Locale.ROOT)} invoice")
+        heading(kind, "Create a clean, professional " + kind.lowercase(Locale.ROOT) + " bill")
 
-        body.addView(label(if (purchase) "PAYMENT TYPE" else "SALE TYPE", 11f, muted, true))
+        body.addView(label(if (purchase) "PURCHASE TYPE" else "SALE TYPE", 11f, muted, true))
         val payment = Spinner(this).apply {
             adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, listOf("Credit", "Cash"))
             background = shape(Color.WHITE, 12, Color.rgb(222, 229, 239))
         }
         body.addView(payment, LinearLayout.LayoutParams(-1, dp(48)).apply { bottomMargin = dp(12) })
 
-        val infoRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        val noBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(12), dp(10), dp(12), dp(10)); background = shape(Color.WHITE, 12, Color.rgb(222, 229, 239)) }
-        noBox.addView(label("INVOICE NO.", 10f, muted, true))
-        noBox.addView(label(invoiceNo, 16f, navy, true), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(4) })
-        val dateBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(12), dp(10), dp(12), dp(10)); background = shape(Color.WHITE, 12, Color.rgb(222, 229, 239)) }
-        dateBox.addView(label("DATE", 10f, muted, true))
-        dateBox.addView(label(today(), 15f, navy, true), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(4) })
-        infoRow.addView(noBox, LinearLayout.LayoutParams(0, -2, 1f).apply { rightMargin = dp(6) })
-        infoRow.addView(dateBox, LinearLayout.LayoutParams(0, -2, 1f).apply { leftMargin = dp(6) })
-        body.addView(infoRow, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(14) })
+        val meta = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        val details = listOf("INVOICE NO." to invoiceNo, "DATE" to today())
+        details.forEach { pair ->
+            val box = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL; setPadding(dp(12), dp(11), dp(12), dp(11))
+                background = shape(Color.WHITE, 13, Color.rgb(225, 232, 243))
+                addView(label(pair.first, 10f, muted, true))
+                addView(label(pair.second, 15f, navy, true), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(5) })
+            }
+            meta.addView(box, LinearLayout.LayoutParams(0, -2, 1f).apply {
+                if (pair.first == "INVOICE NO.") rightMargin = dp(5) else leftMargin = dp(5)
+            })
+        }
+        body.addView(meta, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(14) })
 
-        body.addView(label(if (purchase) "SUPPLIER *" else "CUSTOMER *", 11f, muted, true))
-        val party = field(if (purchase) "Supplier / Party name" else "Customer name")
-        val phone = field("Phone Number")
+        heading("Party Details", "Customer or supplier information")
+        val party = field(if (purchase) "Supplier name *" else "Customer name *")
+        val phone = field("Phone number")
         body.addView(party); body.addView(phone)
 
-        val addItems = TextView(this).apply {
-            text = "＋  Add Items (Optional)"; textSize = 14f; typeface = Typeface.DEFAULT_BOLD
-            gravity = Gravity.CENTER; setTextColor(blue); background = shape(Color.rgb(232, 240, 255), 13)
-            setPadding(dp(12), dp(15), dp(12), dp(15))
+        val section = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+        section.addView(label("Items", 18f, navy, true), LinearLayout.LayoutParams(0, -2, 1f))
+        val add = TextView(this).apply {
+            text = "＋ Add Item"; textSize = 13f; typeface = Typeface.DEFAULT_BOLD; gravity = Gravity.CENTER
+            setTextColor(Color.WHITE); background = shape(blue, 12); setPadding(dp(14), dp(10), dp(14), dp(10))
         }
-        body.addView(addItems, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(4); bottomMargin = dp(12) })
+        section.addView(add)
+        body.addView(section, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(7) })
+        body.addView(label("Add multiple products or services to the same bill.", 11f, muted),
+            LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(10) })
 
-        val itemPanel = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL; setPadding(dp(14), dp(14), dp(14), dp(14))
-            background = shape(Color.WHITE, 15, Color.rgb(222, 229, 239)); visibility = View.GONE
-        }
-        itemPanel.addView(label(if (purchase) "Add Items to Purchase" else "Add Items to Sale", 16f, navy, true), LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
-        val item = field("Item Name  •  e.g. Chocolate Cake")
-        val qty = field("Quantity", "1")
-        val unit = Spinner(this).apply {
-            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, listOf("pcs", "kg", "gram", "litre", "box", "bag", "dozen"))
-            background = shape(Color.WHITE, 11, Color.rgb(222, 229, 239))
-        }
-        val rate = field("Rate (Price / Unit)")
-        val taxMode = Spinner(this).apply {
-            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, listOf("Without Tax", "With Tax"))
-            background = shape(Color.WHITE, 11, Color.rgb(222, 229, 239))
-        }
-        val gst = field("GST %", "0")
-        itemPanel.addView(item)
-        itemPanel.addView(label("Quantity", 11f, muted, true)); itemPanel.addView(qty)
-        itemPanel.addView(label("Unit", 11f, muted, true))
-        itemPanel.addView(unit, LinearLayout.LayoutParams(-1, dp(48)).apply { bottomMargin = dp(10) })
-        itemPanel.addView(label("Rate (Price / Unit)", 11f, muted, true)); itemPanel.addView(rate)
-        itemPanel.addView(label("Tax Type", 11f, muted, true))
-        itemPanel.addView(taxMode, LinearLayout.LayoutParams(-1, dp(48)).apply { bottomMargin = dp(10) })
-        itemPanel.addView(gst)
-        body.addView(itemPanel)
-        addItems.setOnClickListener {
-            itemPanel.visibility = if (itemPanel.visibility == View.VISIBLE) View.GONE else View.VISIBLE
-            addItems.text = if (itemPanel.visibility == View.VISIBLE) "−  Hide Items" else "＋  Add Items (Optional)"
-        }
+        data class BillRow(val card: LinearLayout, val name: EditText, val qty: EditText, val rate: EditText,
+                           val gst: EditText, val unit: Spinner, val tax: Spinner, val amount: TextView)
+        val rows = mutableListOf<BillRow>()
+        val host = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        body.addView(host)
 
-        val totalCard = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL; setPadding(dp(16), dp(14), dp(16), dp(14))
-            background = shape(Color.WHITE, 16, Color.rgb(220, 230, 246))
+        val summary = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL; setPadding(dp(15), dp(14), dp(15), dp(14))
+            background = shape(Color.WHITE, 16, Color.rgb(216, 229, 247))
         }
-        totalCard.addView(label("TOTAL AMOUNT", 11f, muted, true))
-        val preview = label("₹0.00", 25f, blue, true)
-        totalCard.addView(preview, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(5) })
-        body.addView(totalCard, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(6); bottomMargin = dp(15) })
+        summary.addView(label("BILL SUMMARY", 10f, muted, true))
+        val countView = label("0 items", 11f, muted)
+        val taxableView = label("Taxable value  ₹0.00", 12f, navy)
+        val gstView = label("GST included  ₹0.00", 12f, muted)
+        val totalView = label("TOTAL  ₹0.00", 23f, blue, true)
+        summary.addView(countView)
+        summary.addView(taxableView, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(8) })
+        summary.addView(gstView, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(4) })
+        summary.addView(totalView, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(8) })
+        body.addView(summary, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(13); bottomMargin = dp(12) })
 
-        fun calc(): Double {
-            val base = (qty.text.toString().toDoubleOrNull() ?: 0.0) * (rate.text.toString().toDoubleOrNull() ?: 0.0)
-            val tax = if (taxMode.selectedItemPosition == 1) (gst.text.toString().toDoubleOrNull() ?: 0.0) else 0.0
-            return base + base * tax / 100.0
-        }
-        val watcher = object : android.text.TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { preview.text = money(if (itemPanel.visibility == View.VISIBLE) calc() else 0.0) }
-            override fun afterTextChanged(s: android.text.Editable?) {}
-        }
-        listOf(qty, rate, gst).forEach { it.addTextChangedListener(watcher) }
-        taxMode.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
-            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
-            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
-                gst.visibility = if (position == 1) View.VISIBLE else View.GONE
-                preview.text = money(if (itemPanel.visibility == View.VISIBLE) calc() else 0.0)
+        fun refreshTotals() {
+            var gross = 0.0
+            var gstTotal = 0.0
+            var count = 0
+            rows.forEach { row ->
+                val q = row.qty.text.toString().toDoubleOrNull() ?: 0.0
+                val r = row.rate.text.toString().toDoubleOrNull() ?: 0.0
+                val g = row.gst.text.toString().toDoubleOrNull() ?: 0.0
+                val amountValue = q * r
+                val taxPart = if (row.tax.selectedItemPosition == 0 && g > 0) amountValue * g / (100 + g) else 0.0
+                gross += amountValue
+                gstTotal += taxPart
+                if (row.name.text.toString().isNotBlank()) count++
+                row.amount.text = "Amount: " + money(amountValue)
             }
+            countView.text = count.toString() + " items added"
+            taxableView.text = "Taxable value  " + money(gross - gstTotal)
+            gstView.text = "GST included  " + money(gstTotal)
+            totalView.text = "TOTAL  " + money(gross)
         }
+
+        fun addBillRow() {
+            val card = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL; setPadding(dp(12), dp(12), dp(12), dp(12))
+                background = shape(Color.WHITE, 14, Color.rgb(225, 232, 243))
+            }
+            val head = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+            val title = label("ITEM " + (rows.size + 1), 11f, blue, true)
+            head.addView(title, LinearLayout.LayoutParams(0, -2, 1f))
+            val remove = TextView(this).apply { text = "Remove"; textSize = 11f; setTextColor(Color.rgb(196, 62, 62)) }
+            head.addView(remove)
+            card.addView(head, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(8) })
+            val name = field("Item name / Search item")
+            val qty = field("Quantity", "1")
+            val rate = field("Rate per unit", "0")
+            val gst = field("GST %", "0")
+            val unit = Spinner(this).apply {
+                adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item,
+                    listOf("pcs", "kg", "gram", "litre", "box", "bag", "dozen", "ton"))
+                background = shape(Color.WHITE, 10, Color.rgb(222, 229, 239))
+            }
+            val tax = Spinner(this).apply {
+                adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item,
+                    listOf("GST Included in Rate", "No GST"))
+                background = shape(Color.WHITE, 10, Color.rgb(222, 229, 239))
+            }
+            card.addView(name)
+            val row1 = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+            row1.addView(qty, LinearLayout.LayoutParams(0, dp(50), 1f).apply { rightMargin = dp(5) })
+            row1.addView(unit, LinearLayout.LayoutParams(0, dp(50), 1f).apply { leftMargin = dp(5); rightMargin = dp(5); bottomMargin = dp(10) })
+            row1.addView(rate, LinearLayout.LayoutParams(0, dp(50), 1f).apply { leftMargin = dp(5) })
+            card.addView(row1)
+            val row2 = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+            row2.addView(gst, LinearLayout.LayoutParams(0, dp(50), 1f).apply { rightMargin = dp(5) })
+            row2.addView(tax, LinearLayout.LayoutParams(0, dp(50), 1f).apply { leftMargin = dp(5); bottomMargin = dp(10) })
+            card.addView(row2)
+            val amount = label("Amount: ₹0.00", 12f, navy, true)
+            card.addView(amount)
+            val itemRow = BillRow(card, name, qty, rate, gst, unit, tax, amount)
+            rows.add(itemRow)
+            val watcher = object : android.text.TextWatcher {
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { refreshTotals() }
+                override fun afterTextChanged(s: android.text.Editable?) {}
+            }
+            listOf(qty, rate, gst).forEach { it.addTextChangedListener(watcher) }
+            tax.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+                override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+                override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) { refreshTotals() }
+            }
+            remove.setOnClickListener {
+                if (rows.size > 1) {
+                    rows.remove(itemRow)
+                    host.removeView(card)
+                    rows.forEachIndexed { index, r ->
+                        val header = r.card.getChildAt(0) as LinearLayout
+                        (header.getChildAt(0) as TextView).text = "ITEM " + (index + 1)
+                    }
+                    refreshTotals()
+                } else {
+                    name.setText("")
+                    qty.setText("1")
+                    rate.setText("0")
+                    gst.setText("0")
+                }
+            }
+            host.addView(card, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(9) })
+            refreshTotals()
+        }
+        add.setOnClickListener { addBillRow() }
+        addBillRow()
+
         val notes = field("Notes / Description (Optional)")
         body.addView(notes)
-
-        button("Save & New", {
-            val p = party.text.toString().trim()
-            val hasItem = itemPanel.visibility == View.VISIBLE
-            val it = item.text.toString().trim()
-            val q = if (hasItem) qty.text.toString().toDoubleOrNull() ?: 0.0 else 0.0
-            val r = if (hasItem) rate.text.toString().toDoubleOrNull() ?: 0.0 else 0.0
-            val g = if (hasItem && taxMode.selectedItemPosition == 1) gst.text.toString().toDoubleOrNull() ?: 0.0 else 0.0
-            if (p.isBlank() || (hasItem && (it.isBlank() || q <= 0 || r < 0 || g < 0))) {
-                Toast.makeText(this, "Customer ka naam aur item details sahi bharein.", Toast.LENGTH_LONG).show()
+        button("Save " + kind + " Bill", {
+            val partyName = party.text.toString().trim()
+            if (partyName.isBlank()) {
+                party.error = "Required"
+                Toast.makeText(this, "Enter customer / supplier name.", Toast.LENGTH_LONG).show()
                 return@button
             }
-            val base = q * r
-            val grand = base + base * g / 100.0
-            val obj = JSONObject().put("party", p).put("phone", phone.text.toString())
-                .put("item", if (hasItem) it else "").put("qty", q).put("unit", unit.selectedItem.toString())
-                .put("rate", r).put("gst", g).put("taxMode", if (g > 0) "With Tax" else "Without Tax")
-                .put("base", base).put("total", grand).put("notes", notes.text.toString())
-                .put("date", today()).put("invoiceNo", invoiceNo).put("paymentType", payment.selectedItem.toString())
-            val a = arr(key); a.put(obj); save(key, a)
-            Toast.makeText(this, "$kind saved: ${money(grand)}", Toast.LENGTH_LONG).show()
-            showPage(kind)
+            val savedItems = JSONArray()
+            var gross = 0.0
+            var gstTotal = 0.0
+            rows.forEach { row ->
+                val n = row.name.text.toString().trim()
+                val q = row.qty.text.toString().toDoubleOrNull() ?: 0.0
+                val r = row.rate.text.toString().toDoubleOrNull() ?: 0.0
+                val g = row.gst.text.toString().toDoubleOrNull() ?: 0.0
+                if (n.isBlank() && r == 0.0) return@forEach
+                if (n.isBlank() || q <= 0 || r < 0 || g < 0 || g > 100) {
+                    Toast.makeText(this, "Check item name, quantity, rate and GST.", Toast.LENGTH_LONG).show()
+                    return@button
+                }
+                val amountValue = q * r
+                val taxPart = if (row.tax.selectedItemPosition == 0 && g > 0) amountValue * g / (100 + g) else 0.0
+                gross += amountValue
+                gstTotal += taxPart
+                savedItems.put(JSONObject().put("name", n).put("qty", q).put("unit", row.unit.selectedItem.toString())
+                    .put("rate", r).put("gst", g).put("taxMode", if (row.tax.selectedItemPosition == 0) "Included" else "None")
+                    .put("amount", amountValue).put("taxAmount", taxPart))
+            }
+            if (savedItems.length() == 0) {
+                Toast.makeText(this, "Add at least one item.", Toast.LENGTH_LONG).show()
+                return@button
+            }
+            val first = savedItems.optJSONObject(0) ?: JSONObject()
+            val obj = JSONObject().put("party", partyName).put("phone", phone.text.toString().trim())
+                .put("items", savedItems).put("item", first.optString("name")).put("qty", first.optDouble("qty"))
+                .put("unit", first.optString("unit")).put("rate", first.optDouble("rate"))
+                .put("gst", if (gross > gstTotal) gstTotal * 100 / (gross - gstTotal) else 0.0)
+                .put("taxMode", "Included").put("base", gross - gstTotal).put("taxAmount", gstTotal)
+                .put("total", gross).put("notes", notes.text.toString().trim()).put("date", today())
+                .put("invoiceNo", invoiceNo).put("paymentType", payment.selectedItem.toString())
+            val saved = arr(key)
+            saved.put(obj)
+            save(key, saved)
+            Toast.makeText(this, kind + " bill saved: " + money(gross), Toast.LENGTH_LONG).show()
+            showPage("Home")
         })
     }
+
     private fun parties() {
         heading("Parties", "Customers and suppliers")
         val name = field("Party / Customer / Supplier name"); val phone = field("Mobile number"); val opening = field("Opening balance (₹)", "0")
