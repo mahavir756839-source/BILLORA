@@ -64,7 +64,7 @@ class MainActivity : Activity() {
         }
         root.addView(bottom)
         setContentView(root)
-        when (name) { "Home" -> AccountingScreens(this).show("Transactions"); "Parties" -> AccountingScreens(this).show("Parties"); "Sale" -> invoiceForm(false); "Purchase" -> invoiceForm(true); "Items" -> items(); "Reports" -> reports(); else -> more() }
+        when (name) { "Home" -> AccountingScreens(this).show("Transactions"); "Parties" -> AccountingScreens(this).show("Parties"); "More" -> AccountingScreens(this).show("Menu"); "Items" -> AccountingScreens(this).show("Items"); "Sale" -> invoiceForm(false); "Purchase" -> invoiceForm(true); "Items" -> items(); "Reports" -> reports(); else -> more() }
     }
 
     private fun label(s: String, size: Float = 15f, color: Int = navy, bold: Boolean = false): TextView =
