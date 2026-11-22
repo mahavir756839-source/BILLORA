@@ -1,25 +1,27 @@
-# BILLORA — Fresh Native Android Billing Starter
+# BILLORA — Native Android Billing & Accounts
 
-This is a brand-new Kotlin Android project. It does not contain or reuse LEDGIX source code.
+A fresh Kotlin Android project for an original billing and bookkeeping app inspired by the broad workflow of small-business billing apps. BILLORA is independently branded and does not reuse LEDGIX source or assets.
 
-## Included in this starter
-- Native Android app written in Kotlin (no Flutter).
-- Simple bill entry: party, item, quantity and rate.
-- Total calculation.
-- Save recent bill records locally on the device.
-- Share a bill summary through Android's share sheet.
-- GitHub Actions workflow to build and upload a debug APK.
+## Current foundation
+- Home dashboard with sales, purchase, party and item counts
+- Sale and purchase entry with quantity, rate, GST percentage and total calculation
+- Local saved transaction registers
+- Party directory with mobile number and opening balance
+- Item catalogue with SKU, unit, sale rate, opening stock and GST rate
+- Basic business summary and shareable sale/purchase registers
+- Firm name, GSTIN, address and contact settings
+- Android share sheet for transaction previews and summaries
 
-## Build with GitHub Actions
-1. Open **Actions** and run **BILLORA Android APK**, or push to `main`.
-2. When the workflow succeeds, open the run and download the `BILLORA-debug-apk` artifact.
+## Build
+Open in Android Studio or run:
+`gradle :app:assembleDebug`
 
-## Local build
-Requires JDK 17 and Gradle 8.9:
-```bash
-gradle :app:assembleDebug
-```
-APK output: `app/build/outputs/apk/debug/app-debug.apk`
+GitHub Actions builds a debug APK on pushes to `main` and manual workflow dispatch. The artifact is named `BILLORA-debug-apk`.
 
-## Important scope note
-This is the clean starter foundation, not a finished full accounting package. It currently stores data locally on one device. GST invoices, PDF/print templates, party ledgers, purchase/stock automation, cloud sync, login and production signing are not implemented yet. Verify the APK on a device before release.
+## Important scope notes
+This is an early functional foundation, not yet a complete Vyapar-equivalent or production accounting system. Data is stored locally on the device. Automatic stock deduction, party running ledgers, payment/cash/bank book, invoice numbering, polished PDF/print templates, GST reports/returns, e-invoice/e-way bill, user login, cloud backup and multi-device sync still need implementation and testing. The simple sales-minus-purchase figure is not net profit.
+
+## Technical
+- Kotlin, native Android views
+- Application ID: `com.billora.billing`
+- Min SDK 23; compile/target SDK 35
